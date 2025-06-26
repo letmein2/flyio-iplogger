@@ -1,9 +1,31 @@
-from flask import Flask, render_template
+from flask import Flask, request, jsonify
+from datetime import datetime
+import os
 
 app = Flask(__name__)
+LOG_DIR = "login_logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+#
 
+@app.route('/api/loglogin', methods=['POST'])
+def log_login():
+  data = request.get_json()
+  username = data.get('username')
+  computer = data.get('computerName')
+  ip = data.get('publicIP')
+  timestamp = data.get('timestamp', datetime.utcnow().isoformat())
 
-@app.route('/')
-@app.route('/<name>')
-def hello(name=None):
-    return render_template('hello.html', name=name)
+  # Create a log file per user
+  log_filename = f"{username}_log.txt"
+  log_file_path = os.path.join(LOG_DIR, log_filename)
+
+  log_entry = f"{timestamp},{username},{computer},{ip}\n"
+
+  # Ensure the log directory exists
+  #os.makedirs(LOG_DIR, exist_ok=True)
+
+  # Write to the user's log file
+  with open(log_file_path, "a") as f:
+    f.write(log_entry)
+
+  return jsonify({"status": "success"}), 200
